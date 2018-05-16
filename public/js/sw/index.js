@@ -1,7 +1,12 @@
 self.addEventListener('fetch', function(event) {
-	if (event.request.url.endsWith('.jpg')) {
   event.respondWith(
-		fetch('/imgs/dr-evil.gif')
+		fetch(event.request).then(function(response){
+			if(response.status === 404) {
+				return new Response('You look like you are lost');
+			}
+			return response;
+		}).catch(function(){
+			return new Response('nope, not today!')
+		})
   );
-}
 });
