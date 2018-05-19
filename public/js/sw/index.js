@@ -1,6 +1,6 @@
 self.addEventListener('install', function(event){
 	event.waitUntil(
-		caches.open('wittr-static-v1').then(function(cache){
+		caches.open('wittr-static-v2').then(function(cache){
 			return cache.addAll([
 		'/',
 		'js/main.js',
@@ -10,6 +10,13 @@ self.addEventListener('install', function(event){
 		'https://fonts.gstatic.com/s/roboto/v15/d-6IYplOFocCacKzxwXSOD8E0i7KZn-EPnyo3HZu7kw.woff'
 	]);
 		})
+	);
+});
+
+
+self.addEventListener('activate', function(event){
+	event.waitUntil(
+		caches.delete('wittr-static-v1')
 	);
 });
 
