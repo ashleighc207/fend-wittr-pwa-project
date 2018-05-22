@@ -18,13 +18,17 @@ IndexController.prototype._registerServiceWorker = function() {
 
   navigator.serviceWorker.register('/sw.js').then(function(reg) {
     if(!indexController) return;
+    if (!navigator.serviceWorker.controller) {
+      return;
+    }
 
-    // TODO: if there's an updated worker already waiting, call
-    // indexController._updateReady()
-    if(reg.waiting){
-
-      indexController._updateReady();
-
+    if (reg.waiting) {
+      indexController._updateReady(reg.waiting);
+      return;
+    }
+    if (reg.installing) {
+      indexController._trackInstalling(reg.installing);
+      return;
     } else if(reg.installing){
 
       reg.installing.addEventListener('statechange', function(){
@@ -34,7 +38,6 @@ IndexController.prototype._registerServiceWorker = function() {
       });
 
     } else {
-
     reg.addEventListener('updatefound', function(){
       reg.installing.addEventListener('statechange', function(){
         if(this.state == 'installed'){
@@ -44,16 +47,30 @@ IndexController.prototype._registerServiceWorker = function() {
     });
 
     }
-    // TODO: otherwise, listen for new installing workers arriving.
-    // If one arrives, track its progress.
-    // If it becomes "installed", call
-    // indexController._updateReady()
+  navigator.serviceWorker.addEventListener('controllerchange', function(){
+    window.location.reload();
+  });
+
+
+};
+
+IndexController.prototype._trackInstalling = function(worker) {
+  var indexController = this;
+  worker.addEventListener('statechange', function() {
+    if (worker.state == 'installed') {
+      indexController._updateReady(worker);
+    }
   });
 };
 
-IndexController.prototype._updateReady = function() {
+IndexController.prototype._updateReady = function(worker) {
   var toast = this._toastsView.show("New version available", {
-    buttons: ['whatever']
+    buttons: ['refresh', 'dismiss']
+  });
+
+  toast.answer.then(function(answer) {
+    if (answer != 'refresh') return;
+    worker.postMessage({action: 'skipWaiting'});
   });
 };
 
