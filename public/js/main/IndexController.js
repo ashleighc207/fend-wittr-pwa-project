@@ -17,17 +17,33 @@ IndexController.prototype._registerServiceWorker = function() {
   var indexController = this;
 
   navigator.serviceWorker.register('/sw.js').then(function(reg) {
-    // TODO: if there's no controller, this page wasn't loaded
-    // via a service worker, so they're looking at the latest version.
-    // In that case, exit early
+    if(!indexController) return;
 
     // TODO: if there's an updated worker already waiting, call
     // indexController._updateReady()
+    if(reg.waiting){
 
-    // TODO: if there's an updated worker installing, track its
-    // progress. If it becomes "installed", call
-    // indexController._updateReady()
+      indexController._updateReady();
 
+    } else if(reg.installing){
+
+      reg.installing.addEventListener('statechange', function(){
+        if(this.state == 'installed'){
+          indexController._updateReady();
+        } 
+      });
+
+    } else {
+
+    reg.addEventListener('updatefound', function(){
+      reg.installing.addEventListener('statechange', function(){
+        if(this.state == 'installed'){
+          indexController._updateReady();
+        } 
+      });
+    });
+
+    }
     // TODO: otherwise, listen for new installing workers arriving.
     // If one arrives, track its progress.
     // If it becomes "installed", call
