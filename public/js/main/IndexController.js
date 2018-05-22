@@ -12,13 +12,48 @@ export default function IndexController(container) {
 }
 
 IndexController.prototype._registerServiceWorker = function() {
-  // TODO: register service worker
-  if(!navigator.serviceWorker) return;
+  if (!navigator.serviceWorker) return;
 
-  navigator.serviceWorker.register('/sw.js').then(function(){
-    console.log('Registration Successful...');
-  }).catch(function(){
-    console.log('Registration Unsuccessful');
+  var indexController = this;
+
+  navigator.serviceWorker.register('/sw.js').then(function(reg) {
+    if(!indexController) return;
+
+    // TODO: if there's an updated worker already waiting, call
+    // indexController._updateReady()
+    if(reg.waiting){
+
+      indexController._updateReady();
+
+    } else if(reg.installing){
+
+      reg.installing.addEventListener('statechange', function(){
+        if(this.state == 'installed'){
+          indexController._updateReady();
+        } 
+      });
+
+    } else {
+
+    reg.addEventListener('updatefound', function(){
+      reg.installing.addEventListener('statechange', function(){
+        if(this.state == 'installed'){
+          indexController._updateReady();
+        } 
+      });
+    });
+
+    }
+    // TODO: otherwise, listen for new installing workers arriving.
+    // If one arrives, track its progress.
+    // If it becomes "installed", call
+    // indexController._updateReady()
+  });
+};
+
+IndexController.prototype._updateReady = function() {
+  var toast = this._toastsView.show("New version available", {
+    buttons: ['whatever']
   });
 };
 
